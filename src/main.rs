@@ -44,7 +44,18 @@ fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
 }
 
 fn main() {
-    match fetch_quote("AAPL") {
+    // Collect command line arguments
+    let args: Vec<String> = std::env::args().collect();
+
+    // Check if user provided a ticker
+    if args.len() < 2 {
+        eprintln!("Usage: cargo run -- <TICKER>");
+        return;
+    }
+
+    let ticker = &args[1];
+
+    match fetch_quote(ticker) {
         Ok(quote) => {
             println!("Symbol:       {}", quote.symbol);
             println!("Price:        ${}", quote.price);
