@@ -45,6 +45,8 @@ async fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();  
+    
     let args: Vec<String> = std::env::args().collect(); // no .await
     
     if args.len() < 2 {
