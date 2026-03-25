@@ -29,7 +29,7 @@ struct ApiResponse {
     global_quote: Quote,
 }
 
-fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
+async fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
     let api_key = std::env::var("ALPHA_VANTAGE_KEY")
     .expect("ALPHA_VANTAGE_KEY not set");
 
@@ -38,16 +38,15 @@ fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
         ticker, api_key
     );
     
-    let response = reqwest::blocking::get(url)?.json::<ApiResponse>()?; // parse the JSON response into an ApiResponse struct   
+    let response = reqwest::get(url).await?.json::<ApiResponse>().await?; // parse the JSON response into an ApiResponse struct   
     
     Ok(response.global_quote)
 }
 
-fn main() {
-    // Collect command line arguments
-    let args: Vec<String> = std::env::args().collect();
-
-    // Check if user provided a ticker
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect(); // no .await
+    
     if args.len() < 2 {
         eprintln!("Usage: cargo run -- <TICKER>");
         return;
@@ -55,7 +54,7 @@ fn main() {
 
     let ticker = &args[1];
 
-    match fetch_quote(ticker) {
+    match fetch_quote(ticker).await { // .await here
         Ok(quote) => {
             println!("Symbol:       {}", quote.symbol);
             println!("Price:        ${}", quote.price);
