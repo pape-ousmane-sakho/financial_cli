@@ -13,6 +13,10 @@ A blazing fast command-line tool built in Rust that fetches real-time financial 
 ## Usage
 
 ```bash
+#Single Ticker
+cargo run -- AAPL
+
+#Multiple Tickers   
 cargo run -- AAPL TSLA MSFT
 ```
 
