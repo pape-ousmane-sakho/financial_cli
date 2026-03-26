@@ -29,7 +29,7 @@ struct ApiResponse {
     global_quote: Quote,
 }
 
-async fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
+async fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error + Send + Sync>> {
     let api_key = std::env::var("ALPHA_VANTAGE_KEY")
     .expect("ALPHA_VANTAGE_KEY not set");
 
@@ -45,26 +45,39 @@ async fn fetch_quote(ticker: &str) -> Result<Quote, Box<dyn Error>> {
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().ok();  
-    
-    let args: Vec<String> = std::env::args().collect(); // no .await
-    
+    dotenv::dotenv().ok();
+
+    let args: Vec<String> = std::env::args().collect();
+
     if args.len() < 2 {
-        eprintln!("Usage: cargo run -- <TICKER>");
+        eprintln!("Usage: cargo run -- AAPL TSLA MSFT");
         return;
     }
 
-    let ticker = &args[1];
+    let tasks: Vec<_> = args[1..]
+        .iter()
+        .enumerate()
+        .map(|(i, ticker)| {
+            let ticker = ticker.clone();
+            tokio::spawn(async move {
+                tokio::time::sleep(tokio::time::Duration::from_millis(i as u64 * 1200)).await;
+                fetch_quote(&ticker).await
+            })
+        })
+        .collect();
 
-    match fetch_quote(ticker).await { // .await here
-        Ok(quote) => {
-            println!("Symbol:       {}", quote.symbol);
-            println!("Price:        ${}", quote.price);
-            println!("Change:       {}", quote.change);
-            println!("Change %:     {}", quote.change_percent);
-            println!("Volume:       {}", quote.volume);
-            println!("Last trading: {}", quote.latest_trading_day);
+    for task in tasks {
+        match task.await.unwrap() {
+            Ok(quote) => {
+                println!("─────────────────────────");
+                println!("Symbol:       {}", quote.symbol);
+                println!("Price:        ${}", quote.price);
+                println!("Change:       {}", quote.change);
+                println!("Change %:     {}", quote.change_percent);
+                println!("Volume:       {}", quote.volume);
+                println!("Last trading: {}", quote.latest_trading_day);
+            }
+            Err(e) => println!("Error: {}", e),
         }
-        Err(e) => println!("Error: {}", e),
     }
 }
