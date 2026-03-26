@@ -13,9 +13,7 @@ A blazing fast command-line tool built in Rust that fetches real-time financial 
 ## Usage
 
 ```bash
-cargo run -- AAPL
-cargo run -- TSLA
-cargo run -- MSFT
+cargo run -- AAPL TSLA MSFT
 ```
 
 ## Example Output
